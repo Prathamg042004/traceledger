@@ -1,0 +1,9 @@
+Receipt number: R-2026-001
+Merchant: Cedar Stationery
+Date: 2026-10-10
+Currency: INR
+Subtotal: 100
+Tax: 18
+Total: 118
+Notebook | 2 | 50 | 100
+SYNTHETIC TEST RECEIPT
