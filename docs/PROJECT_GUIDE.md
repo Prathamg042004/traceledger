@@ -6,7 +6,7 @@ Business information arrives as invoices, purchase orders and emails whose layou
 
 ## Abstract
 
-TraceLedger is a web application for converting unstructured business text into schema-constrained records. It combines a language-model extraction interface with exact source-evidence checks, deterministic business validation and field-level human review. The system accepts text-layer PDF and text inputs, supports editable extraction schemas, compares related procurement documents, and exports reviewed results. A deterministic label parser provides an offline baseline, while a reproducible evaluation harness compares it with live model extraction on inspectable synthetic fixtures. The implementation emphasizes traceability and explicit uncertainty: missing fields remain empty, source discrepancies are preserved, and unsupported values require review. Its current scope is a single-reviewer browser-local prototype; production authentication, durable multi-user storage, OCR and confidence calibration remain extensions.
+TraceLedger is a web application for converting unstructured business text into schema-constrained records. It combines a language-model extraction interface with exact source-evidence checks, deterministic business validation and field-level human review. The system accepts PDF, image and text inputs with English OCR, supports editable extraction schemas, compares related procurement documents, and exports reviewed results. A deterministic label parser provides an offline baseline, while a reproducible evaluation harness compares it with live model extraction on inspectable synthetic fixtures. The implementation emphasizes traceability and explicit uncertainty: missing fields remain empty, source discrepancies are preserved, and unsupported values require review. Its current scope is a single-reviewer browser-local prototype; production authentication, durable multi-user storage, multilingual OCR and confidence calibration remain extensions.
 
 ## Research question
 
@@ -30,7 +30,7 @@ The contribution is the integration and evaluation of a reviewable workflow, not
 
 ## What the examiner should see
 
-Use the included Northstar procurement pack. The invoice total intentionally differs from subtotal plus tax and from the purchase order by INR 2,000. Show the source, extracted value, validation error, related-document conflict, correction, review and export in that order. Explain the distinction between extraction accuracy and business correctness: accurately reading a wrong total is still correct extraction.
+Use the included Northstar procurement pack. The invoice total intentionally differs from subtotal plus tax and from the purchase order by INR 2,000. Show the source, extracted value, validation error, related-document conflict, correction, review of fields and items, and Excel export in that order. Explain the distinction between extraction accuracy and business correctness: accurately reading a wrong total is still correct extraction.
 
 ## Evaluation plan beyond the prototype
 
@@ -44,7 +44,7 @@ Compare:
 
 Report field exact match by document category; precision and recall for populated fields; correct-abstention rate; unsupported-value rate; validation anomaly precision/recall; latency; model cost; and reviewer correction count. Record the model ID, prompt version, date and fixture version. Discuss failures instead of hiding them.
 
-The included eight-fixture evaluation is only a functional smoke test. No live AI score should be claimed until actually run with a configured provider.
+The included twenty-fixture evaluation is only a functional smoke test. No live AI score should be claimed until actually run with a configured provider.
 
 ## Suggested report structure
 
@@ -73,13 +73,13 @@ The included eight-fixture evaluation is only a functional smoke test. No live A
 
 **Where is data stored?** In memory by default, optionally in browser localStorage. Live inference sends text to the model provider. There is no production database in this version.
 
-**Does it process scanned PDFs?** Not yet. It extracts PDF text layers. Scans require OCR before import; an OCR stage is a defined extension.
+**Does it process scanned PDFs?** Yes. PDF pages with fewer than 20 text characters are rendered to a canvas and recognized using Tesseract.js. Up to five scanned pages are accepted per file. English OCR is fallible and must be checked against the original.
 
 **Is the audit log immutable?** No. It is a local review history. A production system would use authenticated users, server-side append-only records and appropriate integrity controls.
 
 **What is the time complexity of the baseline?** It scans document lines against each schema field, approximately O(F × L), where F is the number of fields and L is the number of lines. Reconciliation currently searches local records; indexed server-side matching would be appropriate at scale.
 
-**What would you improve next?** Add OCR with bounding boxes, line-item extraction, multi-user authenticated storage, durable rate limits, larger held-out evaluations and empirical confidence calibration.
+**What would you improve next?** Add OCR bounding boxes, discount-aware line-item validation, multi-user authenticated storage, durable rate limits, larger held-out evaluations and empirical confidence calibration.
 
 ## Personal preparation checklist
 
