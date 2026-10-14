@@ -5,8 +5,9 @@ import { TEMPLATES, SAMPLES, baselineExtract, validateFields, verifyEvidence, re
 import { baselineItems, itemIssues } from '../lib/items.mjs';
 import { readDocument } from '../lib/ingest.mjs';
 import { BENCHMARK, runBaseline } from '../lib/benchmark.mjs';
+import Overview from './overview';
 
-const navigation = [['workspace','Document workspace',LayoutDashboard],['reconcile','Cross-document checks',GitCompareArrows],['schemas','Extraction schemas',Braces],['evaluation','Evaluation lab',FlaskConical],['audit','Review history',History]];
+const navigation = [['overview','Intelligence overview',Activity],['workspace','Document workspace',LayoutDashboard],['reconcile','Cross-document checks',GitCompareArrows],['schemas','Extraction schemas',Braces],['evaluation','Evaluation lab',FlaskConical],['audit','Review history',History]];
 const initialDocs = () => SAMPLES.map(d=>({...d, fields:[], audit:[], status:'unprocessed'}));
 const typeLabel = type => ({invoice:'Invoice',purchase_order:'Purchase order',email:'Business email',receipt:'Receipt'}[type]||'Custom document');
 const timeLabel = time => new Date(time).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
@@ -20,7 +21,7 @@ function Empty({icon:Icon=ScanLine,title,children}) { return <div className="emp
 export default function Home() {
   const [docs,setDocs]=useState(initialDocs);
   const [active,setActive]=useState('sample-invoice');
-  const [page,setPage]=useState('workspace');
+  const [page,setPage]=useState('overview');
   const [search,setSearch]=useState('');
   const [mode,setMode]=useState('baseline');
   const [busy,setBusy]=useState(false);
@@ -156,6 +157,18 @@ export default function Home() {
   }
   const selectedEvidence=fields.find(f=>f.key===selectedField)?.evidence;
   const sourceLines=doc?.text.split('\n')||[];
+  async function batchOffline() {
+    if(busy)return;
+    setBusy(true);setError('');
+    try {
+      const results=docs.filter(d=>!d.fields.length).map(d=>{
+        const started=performance.now();
+        return {...d,fields:baselineExtract(d.text,schemas[d.type]||schemas.invoice),items:baselineItems(d.text),engine:'baseline',model:'Deterministic label parser',duration:Math.round(performance.now()-started),status:'review',extractedAt:new Date().toISOString(),audit:[...d.audit,{time:new Date().toISOString(),action:'Batch extracted with offline baseline'}]};
+      });
+      setDocs(previous=>previous.map(d=>results.find(r=>r.id===d.id)||d));
+      setNotice(`${results.length} documents processed. Review the priority queue.`);
+    }catch(e){setError(e.message);}finally{setBusy(false);}
+  }
 
   return <div className="app-shell">
     <aside className={`sidebar ${mobileNav?'mobile-open':''}`}>
@@ -167,10 +180,11 @@ export default function Home() {
     </aside>
     <main>
       <header className="topbar"><div className="breadcrumb"><button className="mobile-toggle icon-button" aria-label="Toggle navigation" onClick={()=>setMobileNav(!mobileNav)}><PanelLeftClose size={18}/></button><span>Workspace</span><ChevronRight size={14}/><strong>{navigation.find(n=>n[0]===page)?.[1]}</strong></div><div className="topbar-right"><span className="environment"><span/> {mode==='baseline'?'Offline baseline':'Live AI mode'}</span><button className="icon-button" aria-label="About this project" onClick={()=>setSettingsOpen(true)}><CircleHelp size={18}/></button><div className="avatar small">PG</div></div></header>
-      <div className="content">
+      <div className={`content ${page==='overview'?'overview-content':''}`}>
         <div className="page-heading"><div><div className="eyebrow">DOCUMENT INTELLIGENCE / {page==='workspace'?'OVERVIEW':page.toUpperCase()}</div><h1>{({workspace:'From documents to decisions.',reconcile:'Find what doesn’t add up.',schemas:'Your data. Your structure.',evaluation:'Show the evidence. Measure the results.',audit:'A record of every review.'})[page]}</h1><p>{({workspace:'Extract the details. Verify the evidence. Move forward with confidence.',reconcile:'Compare extracted invoices and purchase orders using their shared order reference.',schemas:'Define the fields you need, then apply the same contract to every extraction.',evaluation:'A reproducible comparison of deterministic parsing and live AI extraction.',audit:'Follow extraction events, field reviews and approvals in your current workspace.'})[page]}</p></div>{page==='workspace'&&<button className="button primary" onClick={()=>{setUploadOpen(true);setError('');}}><Plus size={17}/>Add document</button>}</div>
         {error&&<div className="alert error" role="alert"><AlertTriangle size={18}/><span>{error}</span><button className="icon-button" aria-label="Dismiss error" onClick={()=>setError('')}><X size={16}/></button></div>}
 
+        {page==='overview'&&<Overview docs={docs} busy={busy} onBatch={batchOffline} onOpen={id=>{setActive(id);setPage('workspace');}} onRestore={incoming=>setDocs(previous=>[...incoming.map(d=>({...d,id:crypto.randomUUID()})),...previous])}/>}
         {page==='workspace'&&<>
           <div className="stat-grid">{[[FileText,'Documents in workspace',docs.length,'Text, PDF, images and email'],[ScanLine,'Extracted documents',completed,`${docs.length-completed} ready to process`],[Clock3,'Awaiting review',reviewCount,'Human checks before approval'],[FileCheck2,'Approved documents',approved,'Reviewed and validated']].map(([Icon,label,value,caption],i)=><div className="stat-card" key={label}><div className="stat-top"><span>{label}</span><Icon size={17}/></div><div className="stat-number">{String(value).padStart(2,'0')}<span className={`stat-indicator indicator-${i}`}><Activity size={15}/></span></div><small>{caption}</small></div>)}</div>
           <div className="demo-banner"><div className="demo-icon"><Sparkles size={20}/></div><div><strong>A small discrepancy. A much better demo.</strong><p>The sample invoice is ₹2,000 above its purchase order. Extract both to uncover the mismatch.</p></div><button onClick={()=>{setActive('sample-invoice');setPage('workspace');if(!docs.some(d=>d.id==='sample-invoice'))setDocs(prev=>[...initialDocs(),...prev]);setNotice('Sample invoice selected. Choose Extract document to begin.');}}>Try the sample pack <ArrowRight size={15}/></button></div>
