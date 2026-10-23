@@ -34,4 +34,4 @@ The current application uses React/Next.js and JavaScript, PDF.js, Tesseract.js 
 
 ## Remaining limitations
 
-Browser-local single-reviewer storage; no authenticated multi-user database. English OCR only, with first-use engine downloads. Image OCR and live model calls require runtime verification; compilation and unit tests do not prove OCR accuracy. Quality metrics measure checklist coverage, not correctness or calibrated model confidence. Synthetic benchmarks are not a production accuracy estimate.
+The local workbench works independently; optional authenticated cloud collaboration is implemented but requires project configuration and hosted acceptance testing (CLOUD-SETUP.md). English OCR only, with first-use engine downloads. Image OCR and live model calls require runtime verification; compilation and unit tests do not prove OCR accuracy. Quality metrics measure checklist coverage, not correctness or calibrated model confidence. Synthetic benchmarks are not a production accuracy estimate.

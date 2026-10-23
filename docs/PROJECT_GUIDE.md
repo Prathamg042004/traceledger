@@ -6,7 +6,7 @@ Business information arrives as invoices, purchase orders and emails whose layou
 
 ## Abstract
 
-TraceLedger is a web application for converting unstructured business text into schema-constrained records. It combines a language-model extraction interface with exact source-evidence checks, deterministic business validation and field-level human review. The system accepts PDF, image and text inputs with English OCR, supports editable extraction schemas, compares related procurement documents, and exports reviewed results. A deterministic label parser provides an offline baseline, while a reproducible evaluation harness compares it with live model extraction on inspectable synthetic fixtures. The implementation emphasizes traceability and explicit uncertainty: missing fields remain empty, source discrepancies are preserved, and unsupported values require review. Its current scope is a single-reviewer browser-local prototype; production authentication, durable multi-user storage, multilingual OCR and confidence calibration remain extensions.
+TraceLedger is a web application for converting unstructured business text into schema-constrained records. It combines a language-model extraction interface with exact source-evidence checks, deterministic business validation and field-level human review. The system accepts PDF, image and text inputs with English OCR, supports editable extraction schemas, compares related procurement documents, and exports reviewed results. A deterministic label parser provides an offline baseline, while a reproducible evaluation harness compares it with live model extraction on inspectable synthetic fixtures. The implementation emphasizes traceability and explicit uncertainty: missing fields remain empty, source discrepancies are preserved, and unsupported values require review. The local workbench is supplemented by an optional authenticated shared-workspace implementation; hosted activation requires the setup and acceptance checklist in CLOUD-SETUP.md. Multilingual OCR and confidence calibration remain extensions.
 
 ## Research question
 
@@ -71,7 +71,7 @@ The included twenty-fixture evaluation is only a functional smoke test. No live 
 
 **What is unique?** The particular evidence-first procurement workflow and its measured evaluation distinguish this implementation from basic extraction demos. Similar ideas exist in industry; do not claim worldwide novelty.
 
-**Where is data stored?** In memory by default, optionally in browser localStorage. Live inference sends text to the model provider. There is no production database in this version.
+**Where is data stored?** In memory by default, optionally in browser localStorage. Live inference sends text to the model provider. Optional explicit saves use a configured Supabase database; this requires separate activation and hosted verification (CLOUD-SETUP.md).
 
 **Does it process scanned PDFs?** Yes. PDF pages with fewer than 20 text characters are rendered to a canvas and recognized using Tesseract.js. Up to five scanned pages are accepted per file. English OCR is fallible and must be checked against the original.
 
@@ -79,7 +79,7 @@ The included twenty-fixture evaluation is only a functional smoke test. No live 
 
 **What is the time complexity of the baseline?** It scans document lines against each schema field, approximately O(F × L), where F is the number of fields and L is the number of lines. Reconciliation currently searches local records; indexed server-side matching would be appropriate at scale.
 
-**What would you improve next?** Add OCR bounding boxes, discount-aware line-item validation, multi-user authenticated storage, durable rate limits, larger held-out evaluations and empirical confidence calibration.
+**What would you improve next?** Add OCR bounding boxes, discount-aware line-item validation, hosted multi-user acceptance testing, durable rate limits, larger held-out evaluations and empirical confidence calibration.
 
 ## Personal preparation checklist
 

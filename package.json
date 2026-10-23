@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.78",
+    "@supabase/supabase-js": "2.118.0",
     "ai": "^7.0.0",
     "exceljs": "^4.4.0",
     "lucide-react": "^0.468.0",
@@ -25,5 +26,8 @@
     "exceljs": {
       "uuid": "^11.1.1"
     }
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.11"
   }
 }
