@@ -2,6 +2,8 @@
 
 **AI-Powered Structured Data Extraction System for Unstructured Business Inputs**
 
+[Quick start](#quick-start) · [Architecture](#architecture) · [Demo guide](#five-minute-demo) · [Evaluation](#evaluation-methodology) · [Project guide](docs/PROJECT_GUIDE.md)
+
 TraceLedger turns business documents into reviewable structured records. Its distinguishing feature is a complete evidence-and-review workflow: preserve the original text, link extracted fields to exact source quotes, validate business rules, reconcile related documents, and record human corrections before approval.
 
 Built as a final-year project by Pratham Gupta with AI-assisted development. The application does not claim a newly trained model or production-grade accuracy.
@@ -103,7 +105,7 @@ For a defensible dissertation experiment, add a held-out dataset of at least 100
 
 ## Data handling and current limitations
 
-- Offline parsing is browser-local. Live extraction sends text through Vercel AI Gateway to a model provider.
+- Offline parsing is browser-local. Live extraction sends text to the configured model provider through a server-side route, using direct Anthropic access or the optional Vercel AI Gateway.
 - No shared database or login is implemented. Persistence is opt-in localStorage on the current device; disabled by default.
 - Browser-local history is not tamper-proof and must not be described as a compliance audit trail.
 - English OCR uses Tesseract.js. First use downloads worker/model assets from public CDNs. Image pixels are processed locally. Handwriting, rotation, blur and complex layouts can fail; compare ingested text against the original file.
