@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import ExcelJS from 'exceljs';
+import {classifyDocument,resolveDocumentType} from '../lib/classify.mjs';
+import {matchLineItems} from '../lib/matching.mjs';
+import {createBatchWorkbook} from '../lib/workbook.mjs';
+import {SAMPLES,TEMPLATES,baselineExtract} from '../lib/engine.mjs';
+import {baselineItems} from '../lib/items.mjs';
+const samples=()=>SAMPLES.map(d=>({...d,fields:baselineExtract(d.text,TEMPLATES[d.type]),items:baselineItems(d.text),status:'review',audit:[]}));
+test('routing detects invoice, order and email without mistaking PO reference for a heading',()=>{for(const d of SAMPLES)assert.equal(classifyDocument(d.text).type,d.type);assert.equal(classifyDocument('Receipt number: R-1\nMerchant: Shop').type,'receipt');});
+test('ambiguous routing abstains and manual choice works',()=>{assert.equal(classifyDocument('Please process this note').type,null);assert.equal(classifyDocument('INVOICE\nRECEIPT').type,null);assert.throws(()=>resolveDocumentType('unknown text','auto'),/unclear/);assert.equal(resolveDocumentType('unknown text','email'),'email');});
+test('item matching passes sample quantities and unit prices despite a header total error',()=>{const [result]=matchLineItems(samples());assert.equal(result.status,'pass');assert.equal(result.rows.length,2);});
+test('item matching finds changed quantity, price, missing and unexpected items',()=>{const docs=samples();docs[0].items[0].quantity='13';docs[0].items[0].unit_price='4501';docs[0].items[1].description='Unordered desk';const [r]=matchLineItems(docs);assert.equal(r.status,'conflict');assert.match(r.rows[0].message,/Quantity differs/);assert.match(r.rows[0].message,/Unit price differs/);assert.equal(r.rows.filter(x=>x.status==='conflict').length,3);});
+test('duplicate order references and repeated descriptions never silently choose a candidate',()=>{let docs=samples();docs.push({...docs[1],id:'another-po'});assert.equal(matchLineItems(docs)[0].status,'waiting');docs=samples();docs[1].items.push({...docs[1].items[0]});assert.equal(matchLineItems(docs)[0].rows[0].status,'waiting');});
+test('vendor/currency mismatch and missing numeric values abstain',()=>{let docs=samples();docs[1].fields.find(f=>f.key==='currency').value='USD';assert.equal(matchLineItems(docs)[0].rows.length,0);docs=samples();docs[0].items[0].quantity='';assert.equal(matchLineItems(docs)[0].rows[0].status,'waiting');});
+test('batch Excel roundtrip retains document identity, draft status and typed numbers',async()=>{const docs=samples();docs[0].fields.find(f=>f.key==='vendor').value='=HYPERLINK("bad")';const wb=new ExcelJS.Workbook();await wb.xlsx.load(await createBatchWorkbook(docs));assert.equal(wb.getWorksheet('Documents').rowCount,4);assert.equal(wb.getWorksheet('Documents').getCell('D2').value,'review');assert.equal(wb.getWorksheet('All fields').getCell('E3').value,'=HYPERLINK("bad")');assert.equal(wb.getWorksheet('All line items').getCell('H2').value,54000);assert.equal(wb.getWorksheet('Documents').getCell('G2').value,86960);assert.equal(wb.getWorksheet('Documents').getCell('A2').value,docs[0].id);});
+
+import {parseSchema} from '../lib/schema.mjs';
+test('schema import roundtrip validates keys, labels, types and size',()=>{const schema=[['invoice_id','Invoice number','text',true],['amount','Total','number',true]];assert.deepEqual(parseSchema(JSON.stringify(schema)),schema);assert.throws(()=>parseSchema('[['),/valid JSON/);assert.throws(()=>parseSchema(JSON.stringify([schema[0],schema[0]])),/unique/);assert.throws(()=>parseSchema(JSON.stringify([['x','   ','text',true]])),/unique/);assert.throws(()=>parseSchema(' '.repeat(20001)),/20 KB/);});
+import {reconcile} from '../lib/engine.mjs';
+test('header reconciliation also abstains on ambiguous order references',()=>{const docs=samples();docs.push({...docs[1],id:'duplicate-order'});const rows=reconcile(docs);assert.equal(rows.length,1);assert.equal(rows[0].status,'waiting');assert.match(rows[0].message,/multiple purchase orders/);});
+test('schema keys must be strings rather than values coercible to strings',()=>{assert.throws(()=>parseSchema(JSON.stringify([[['invoice_id'],'Invoice number','text',true]])),/unique/);});
