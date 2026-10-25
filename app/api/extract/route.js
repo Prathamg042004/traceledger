@@ -2,6 +2,7 @@ import { generateText, Output } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
 import { timingSafeEqual } from 'node:crypto';
+import { readJsonBody, RequestError } from '../../../lib/request.mjs';
 import { normalize } from '../../../lib/engine.mjs';
 
 export const maxDuration = 60;
@@ -18,10 +19,8 @@ export async function POST(request) {
   const expected = Buffer.from(process.env.APP_ACCESS_CODE);
   if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) return Response.json({ error: 'Enter the correct project access code in Settings.' }, { status: 401 });
   try {
-    if (Number(request.headers.get('content-length') || 0) > 100000) return Response.json({ error: 'Input is too large.' }, { status: 413 });
-    const raw = await request.text();
-    if (raw.length > 100000) return Response.json({ error: 'Input is too large.' }, { status: 413 });
-    const parsed = requestSchema.safeParse(JSON.parse(raw));
+    if (Number(request.headers.get('content-length') || 0) > 100000) return Response.json({error:'Input is too large.'},{status:413});
+    const parsed = requestSchema.safeParse(await readJsonBody(request));
     if (!parsed.success || !parsed.data.text.trim()) return Response.json({ error: 'Provide document text and a valid schema (up to 20 fields).' }, { status: 400 });
     const { text, schema } = parsed.data;
     if (new Set(schema.map(f => f[0])).size !== schema.length) return Response.json({ error: 'Schema keys must be unique.' }, { status: 400 });
@@ -43,6 +42,7 @@ export async function POST(request) {
     const items=output.items.map(item=>({...item,quantity:normalize(item.quantity,'number'),unit_price:normalize(item.unit_price,'number'),amount:normalize(item.amount,'number'),reviewed:false}));
     return Response.json({ fields, items, engine: 'ai', model:modelId(), duration: Date.now()-start, tokens: usage.totalTokens || null });
   } catch (error) {
+    if (error instanceof RequestError) return Response.json({error:error.message},{status:error.status});
     if (error instanceof SyntaxError) return Response.json({ error: 'The request must contain valid JSON.' }, { status: 400 });
     console.error('Extraction failed:', error.name);
     return Response.json({ error: 'AI extraction could not finish. Check provider credits, model availability and authentication, then retry. No demo results were substituted.' }, { status: 502 });
