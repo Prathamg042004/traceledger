@@ -8,6 +8,12 @@ TraceLedger turns business documents into reviewable structured records. Its dis
 
 Built as a final-year project by Pratham Gupta with AI-assisted development. The application does not claim a newly trained model or production-grade accuracy.
 
+## Preview
+
+![TraceLedger project showcase — evidence-first document intelligence](assets/preview.jpg)
+
+[Open live demo](https://traceledger-seven.vercel.app) · [Security review](docs/SECURITY_REVIEW.md) · [Tests](tests/)
+
 ## Features
 
 - Import PDFs, PNG/JPG/WEBP images, TXT, MD, EML or pasted text. English OCR runs in the browser for images and PDF pages without usable text (3 MB; 20 PDF pages; up to 5 scanned pages per file).
