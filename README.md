@@ -20,6 +20,7 @@ Built as a final-year project by Pratham Gupta with AI-assisted development. The
 - Editable line-item tables with quantity, unit price, stated amount, evidence and human review.
 - Excel (.xlsx) workbooks containing Document, Fields, Line items, Validation, Review history and Source text sheets. JSON and spreadsheet-safe CSV exports include document status.
 - Browser-local review history and opt-in local persistence.
+- Optional email sign-in, shared document revisions, owner/reviewer/viewer roles and server-recorded review notes. Activation and hosted verification: [Cloud setup](docs/CLOUD-SETUP.md).
 - Twenty inspectable synthetic fixtures and an evaluation UI that measures normalized exact match.
 - Responsive workspace UI and a deployment build that runs core logic tests first.
 
@@ -54,7 +55,7 @@ The shared access code is suitable for a controlled student demo, not public mul
 
 ## Deploy to Vercel
 
-Import this GitHub repository as a Next.js project. Build command: `npm run build`. No separate database is needed for the current browser-local version. Add the environment variables above only when enabling live AI.
+Import this GitHub repository as a Next.js project. Build command: `npm run build`. No database is needed for the local workbench. The optional Shared workspace requires a dedicated Supabase project and the [cloud setup](docs/CLOUD-SETUP.md). Add the environment variables above only when enabling live AI.
 
 ## Architecture
 
@@ -82,6 +83,9 @@ Core modules:
 | `app/page.js` | Workspace, review, import, schemas, evaluation and history UI |
 | `app/api/extract/route.js` | Authentication, request validation and structured AI generation |
 | `lib/engine.mjs` | Offline parser, normalization, validation, evidence checks and reconciliation |
+| `app/shared.js`, `lib/cloud/` | Optional authenticated team workflow and local/shared copy boundaries |
+| `supabase/migrations/` | RLS, membership, version-checked saves and server activity |
+| `tests/cloud.test.mjs` | Embedded PostgreSQL role/isolation/conflict integration test |
 | `lib/benchmark.mjs` | Public synthetic fixtures and exact-match scoring |
 | `tests/engine.test.mjs` | Core behavioral regression tests |
 
